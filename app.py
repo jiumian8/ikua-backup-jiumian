@@ -7,7 +7,7 @@ import requests
 import datetime
 import logging
 from logging.handlers import RotatingFileHandler
-from flask import Flask, render_template, request, jsonify, Response
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 import grpc
@@ -16,6 +16,9 @@ import clouddrive_pb2
 import clouddrive_pb2_grpc
 
 app = Flask(__name__)
+# 设置 Session 密钥
+app.secret_key = os.getenv("SECRET_KEY", os.urandom(24).hex())
+
 CONFIG_FILE = "/app/data/config.json"
 TEMP_DIR = "/app/data/temp_backups"
 LOG_FILE = "/app/data/app.log"
@@ -24,29 +27,34 @@ LOG_FILE = "/app/data/app.log"
 WEB_USER = os.getenv("WEB_USER", "admin")
 WEB_PASS = os.getenv("WEB_PASS", "admin123")
 
-def check_auth(username, password):
-    return username == WEB_USER and password == WEB_PASS
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        data = request.json
+        if data.get('username') == WEB_USER and data.get('password') == WEB_PASS:
+            session['logged_in'] = True
+            return jsonify({"status": "success", "msg": "登录成功"})
+        return jsonify({"status": "error", "msg": "账号或密码错误"}), 401
+    return render_template('login.html')
 
-def authenticate():
-    return Response(
-        '认证失败，请提供正确的账号和密码。\n', 401,
-        {'WWW-Authenticate': 'Basic realm="Login Required"'})
+@app.route('/logout')
+def logout():
+    session.pop('logged_in', None)
+    return redirect(url_for('login'))
 
 @app.before_request
 def require_auth():
-    # 要求所有请求必须携带正确的密码
-    auth = request.authorization
-    if not auth or not check_auth(auth.username, auth.password):
-        return authenticate()
+    # 静态文件和登录路由不拦截，其他必须登录
+    if request.endpoint not in ['login', 'static'] and not session.get('logged_in'):
+        if request.path.startswith('/api/'):
+            return jsonify({"status": "error", "msg": "未登录"}), 401
+        return redirect(url_for('login'))
 
 # --- 📝 日志配置优化 ---
 os.makedirs("/app/data", exist_ok=True)
-
-# 1. 屏蔽 Flask 底层的 HTTP 访问日志 (解决满屏的 GET 200)
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 
-# 2. 配置我们自己的业务专属日志
 logger = logging.getLogger("ikuai_backup")
 logger.setLevel(logging.INFO)
 formatter = logging.Formatter('[%(asctime)s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
@@ -56,7 +64,6 @@ file_handler.setFormatter(formatter)
 stream_handler = logging.StreamHandler()
 stream_handler.setFormatter(formatter)
 
-# 防止重复添加 Handler
 if not logger.handlers:
     logger.addHandler(file_handler)
     logger.addHandler(stream_handler)
@@ -97,7 +104,7 @@ class IKuaiManager:
             "Content-Type": "application/json;charset=UTF-8",
             "Origin": self.ip,
             "Referer": f"{self.ip}/",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/147.0.0.0"
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
         }
 
     def login(self):
