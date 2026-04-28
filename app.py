@@ -7,7 +7,7 @@ import requests
 import datetime
 import logging
 from logging.handlers import RotatingFileHandler
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, Response
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 import grpc
@@ -20,16 +20,48 @@ CONFIG_FILE = "/app/data/config.json"
 TEMP_DIR = "/app/data/temp_backups"
 LOG_FILE = "/app/data/app.log"
 
-# --- 📝 日志配置 ---
-os.makedirs("/app/data", exist_ok=True)
-logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s - %(levelname)s - %(message)s',
-                    handlers=[
-                        RotatingFileHandler(LOG_FILE, maxBytes=2*1024*1024, backupCount=3, encoding='utf-8'),
-                        logging.StreamHandler()
-                    ])
-logger = logging.getLogger(__name__)
+# --- 🔐 网页安全认证 ---
+WEB_USER = os.getenv("WEB_USER", "admin")
+WEB_PASS = os.getenv("WEB_PASS", "admin123")
 
+def check_auth(username, password):
+    return username == WEB_USER and password == WEB_PASS
+
+def authenticate():
+    return Response(
+        '认证失败，请提供正确的账号和密码。\n', 401,
+        {'WWW-Authenticate': 'Basic realm="Login Required"'})
+
+@app.before_request
+def require_auth():
+    # 要求所有请求必须携带正确的密码
+    auth = request.authorization
+    if not auth or not check_auth(auth.username, auth.password):
+        return authenticate()
+
+# --- 📝 日志配置优化 ---
+os.makedirs("/app/data", exist_ok=True)
+
+# 1. 屏蔽 Flask 底层的 HTTP 访问日志 (解决满屏的 GET 200)
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
+
+# 2. 配置我们自己的业务专属日志
+logger = logging.getLogger("ikuai_backup")
+logger.setLevel(logging.INFO)
+formatter = logging.Formatter('[%(asctime)s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+
+file_handler = RotatingFileHandler(LOG_FILE, maxBytes=2*1024*1024, backupCount=3, encoding='utf-8')
+file_handler.setFormatter(formatter)
+stream_handler = logging.StreamHandler()
+stream_handler.setFormatter(formatter)
+
+# 防止重复添加 Handler
+if not logger.handlers:
+    logger.addHandler(file_handler)
+    logger.addHandler(stream_handler)
+
+# --- 默认配置 ---
 default_config = {
     "ikuai_ip": "http://192.168.5.1",
     "ikuai_user": "admin",
@@ -84,7 +116,7 @@ class IKuaiManager:
             return False
 
     def process_backup(self, save_dir):
-        logger.info("⏳ 爱快路由器：正在下发创建备份指令...")
+        logger.info("⏳ 正在向爱快下发创建备份指令...")
         self.session.post(f"{self.ip}/Action/call", json={"func_name": "backup", "action": "create", "param": {}}, headers=self.headers)
         time.sleep(2)
         
@@ -100,17 +132,18 @@ class IKuaiManager:
 
         url_dl = f"{self.ip}/Action/download?filename={filename}"
         dl_headers = self.headers.copy()
-        del dl_headers["Content-Type"]
+        if "Content-Type" in dl_headers:
+            del dl_headers["Content-Type"]
         
         os.makedirs(save_dir, exist_ok=True)
         local_path = os.path.join(save_dir, filename)
-        logger.info(f"⏳ 开始拉取备份文件到本地: {local_path}")
+        logger.info(f"⏳ 开始拉取备份文件到本地...")
         with self.session.get(url_dl, headers=dl_headers, stream=True) as r:
             r.raise_for_status()
             with open(local_path, 'wb') as f:
                 for chunk in r.iter_content(chunk_size=8192):
                     f.write(chunk)
-        logger.info("✅ 本地下载完成。")
+        logger.info(f"✅ 本地下载完成: {filename}")
         return local_path
 
 class CD2Manager:
@@ -135,7 +168,7 @@ class CD2Manager:
     def upload_file(self, local_path, dest_dir):
         filename = os.path.basename(local_path)
         meta = [('authorization', f'Bearer {self.jwt_token}')]
-        logger.info(f"⏳ CD2：开始上传 {filename} 到网盘目录...")
+        logger.info(f"⏳ CD2：开始推送 {filename} 到云端...")
         
         c_req = clouddrive_pb2.CreateFileRequest(parentPath=dest_dir, fileName=filename)
         c_res = self.stub.CreateFile(c_req, metadata=meta)
@@ -151,7 +184,7 @@ class CD2Manager:
                 w_req = clouddrive_pb2.WriteFileRequest(fileHandle=file_handle, startPos=bytes_written, length=len(chunk), buffer=chunk, closeFile=is_last)
                 self.stub.WriteToFile(w_req, metadata=meta)
                 bytes_written += len(chunk)
-        logger.info("✅ CD2：上传完成！")
+        logger.info("✅ CD2：云端上传完成！")
 
     def clean_old_backups(self, dest_dir, retain_days):
         meta = [('authorization', f'Bearer {self.jwt_token}')]
@@ -168,7 +201,7 @@ class CD2Manager:
                             files_to_delete.append(f.fullPathName)
             
             if files_to_delete:
-                logger.info(f"⏳ 发现 {len(files_to_delete)} 个过期备份，准备清理...")
+                logger.info(f"⏳ 发现 {len(files_to_delete)} 个过期备份，正在清理...")
                 del_req = clouddrive_pb2.MultiFileRequest(path=files_to_delete)
                 self.stub.DeleteFiles(del_req, metadata=meta)
                 logger.info("✅ 清理过期备份完成。")
@@ -177,7 +210,7 @@ class CD2Manager:
 
 def execute_backup_job():
     logger.info("==========================================")
-    logger.info("🚀 触发备份任务")
+    logger.info("🚀 启动自动化备份任务")
     cfg = load_config()
     
     ikuai = IKuaiManager(cfg['ikuai_ip'], cfg['ikuai_user'], cfg['ikuai_pass'])
@@ -189,22 +222,23 @@ def execute_backup_job():
             cd2.upload_file(local_path, cfg['cd2_path'])
             cd2.clean_old_backups(cfg['cd2_path'], int(cfg['retain_days']))
             os.remove(local_path)
-            logger.info("✅ 整个流水线已圆满结束，临时文件已清除。")
+            logger.info("🎉 整个备份流水线圆满结束！临时文件已清理。")
         else:
-            logger.error("❌ CD2 登录失败或未获取到本地备份文件，流程终止。")
+            logger.error("❌ CD2登录失败或备份拉取失败，流程终止。")
     else:
         logger.error("❌ 爱快路由器登录失败，流程终止。")
+    logger.info("==========================================")
 
 def update_scheduler():
     cfg = load_config()
     scheduler.remove_all_jobs()
     try:
         scheduler.add_job(execute_backup_job, CronTrigger.from_crontab(cfg['cron_schedule']))
-        logger.info(f"⚙️ 调度器已更新，当前执行周期: {cfg['cron_schedule']}")
+        logger.info(f"⚙️ 调度器已重置，当前 Cron: {cfg['cron_schedule']}")
     except Exception as e:
-        logger.error(f"❌ Cron 表达式解析失败: {e}")
+        logger.error(f"❌ Cron 表达式错误: {e}")
 
-# --- Web UI 路由 ---
+# --- 路由 ---
 @app.route('/')
 def index():
     return render_template('index.html', config=load_config())
@@ -214,21 +248,19 @@ def save_cfg():
     data = request.json
     save_config(data)
     update_scheduler()
-    logger.info("💾 用户从 WebUI 保存了新配置并刷新了调度器。")
+    logger.info("💾 配置已从网页端保存更新。")
     return jsonify({"status": "success", "msg": "配置已保存并生效！"})
 
 @app.route('/api/trigger', methods=['POST'])
 def trigger_now():
     scheduler.add_job(execute_backup_job)
-    logger.info("👉 用户从 WebUI 手动触发了立即执行。")
-    return jsonify({"status": "success", "msg": "已在后台触发备份任务！请查看日志。"})
+    return jsonify({"status": "success", "msg": "已触发，请查看日志！"})
 
 @app.route('/api/logs', methods=['GET'])
 def get_logs():
     if not os.path.exists(LOG_FILE):
         return jsonify({"logs": "暂无日志..."})
     with open(LOG_FILE, 'r', encoding='utf-8') as f:
-        # 获取最后 100 行日志
         lines = f.readlines()[-100:]
         return jsonify({"logs": "".join(lines)})
 
