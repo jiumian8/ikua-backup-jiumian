@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>爱快定时备份系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; padding-top: 30px; padding-bottom: 50px; }
+        .card { box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: none; margin-bottom: 20px; }
+        #logOutput { 
+            height: 300px; 
+            background-color: #212529; 
+            color: #20c997; 
+            font-family: monospace; 
+            resize: none; 
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">🚀 爱快定时备份配置</h5>
+                    <button class="btn btn-warning btn-sm fw-bold" onclick="triggerBackup()">立即执行一次</button>
+                </div>
+                <div class="card-body">
+                    <form id="configForm">
+                        <div class="row mb-3">
+                            <div class="col"><label class="form-label text-muted fw-bold">路由器 IP 地址</label><input type="text" class="form-control" id="ikuai_ip" value="{{ config.ikuai_ip }}"></div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col"><label class="form-label text-muted fw-bold">账号</label><input type="text" class="form-control" id="ikuai_user" value="{{ config.ikuai_user }}"></div>
+                            <div class="col"><label class="form-label text-muted fw-bold">密码</label><input type="password" class="form-control" id="ikuai_pass" value="{{ config.ikuai_pass }}"></div>
+                        </div>
+                        <div class="row mb-3 mt-4">
+                            <div class="col"><label class="form-label text-muted fw-bold">CD2 API 地址 (IP:端口)</label><input type="text" class="form-control" id="cd2_address" value="{{ config.cd2_address }}"></div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col"><label class="form-label text-muted fw-bold">账号</label><input type="text" class="form-control" id="cd2_user" value="{{ config.cd2_user }}"></div>
+                            <div class="col"><label class="form-label text-muted fw-bold">密码</label><input type="password" class="form-control" id="cd2_pass" value="{{ config.cd2_pass }}"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted fw-bold">CD2 目标存储路径</label>
+                            <input type="text" class="form-control" id="cd2_path" value="{{ config.cd2_path }}">
+                        </div>
+                        <div class="row mb-3 mt-4">
+                            <div class="col">
+                                <label class="form-label text-muted fw-bold">保留天数 (超过将删除)</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="retain_days" value="{{ config.retain_days }}">
+                                    <span class="input-group-text">天</span>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <label class="form-label text-muted fw-bold">Cron 定时表达式</label>
+                                <input type="text" class="form-control" id="cron_schedule" value="{{ config.cron_schedule }}">
+                                <small class="text-muted">默认: 0 3 * * * (每天凌晨3点)</small>
+                            </div>
+                        </div>
+                        <div class="d-grid mt-4">
+                            <button type="button" class="btn btn-success" onclick="saveConfig()">💾 保存配置并生效</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-5">
+            <div class="card h-100">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">📜 运行日志</h5>
+                    <div>
+                        <div class="form-check form-switch d-inline-block me-2">
+                            <input class="form-check-input" type="checkbox" id="autoRefresh" checked>
+                            <label class="form-check-label text-white text-opacity-75" for="autoRefresh"><small>自动刷新</small></label>
+                        </div>
+                        <button class="btn btn-outline-light btn-sm" onclick="clearLogs()">清空</button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <textarea class="form-control border-0 rounded-0 w-100 p-3" id="logOutput" readonly></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 获取与保存配置
+function getFormData() {
+    return {
+        "ikuai_ip": document.getElementById('ikuai_ip').value,
+        "ikuai_user": document.getElementById('ikuai_user').value,
+        "ikuai_pass": document.getElementById('ikuai_pass').value,
+        "cd2_address": document.getElementById('cd2_address').value,
+        "cd2_user": document.getElementById('cd2_user').value,
+        "cd2_pass": document.getElementById('cd2_pass').value,
+        "cd2_path": document.getElementById('cd2_path').value,
+        "retain_days": parseInt(document.getElementById('retain_days').value),
+        "cron_schedule": document.getElementById('cron_schedule').value
+    };
+}
+
+function saveConfig() {
+    fetch('/api/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(getFormData())
+    }).then(res => res.json()).then(data => alert(data.msg));
+}
+
+function triggerBackup() {
+    if(confirm("确定要在后台立即触发一次备份吗？")) {
+        fetch('/api/trigger', { method: 'POST' })
+        .then(res => res.json()).then(data => {
+            fetchLogs(); // 立即刷一次日志
+        });
+    }
+}
+
+// 日志逻辑
+function fetchLogs() {
+    fetch('/api/logs')
+    .then(res => res.json())
+    .then(data => {
+        const logBox = document.getElementById('logOutput');
+        // 只有当有新内容时才滚动，避免干扰用户往上翻看
+        const isScrolledToBottom = logBox.scrollHeight - logBox.clientHeight <= logBox.scrollTop + 10;
+        logBox.value = data.logs;
+        if(isScrolledToBottom) {
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+    });
+}
+
+function clearLogs() {
+    fetch('/api/clear_logs', {method: 'POST'}).then(() => fetchLogs());
+}
+
+// 定时拉取日志 (每 2 秒)
+setInterval(() => {
+    if(document.getElementById('autoRefresh').checked) {
+        fetchLogs();
+    }
+}, 2000);
+
+// 页面加载完成拉取一次
+window.onload = fetchLogs;
+</script>
+</body>
+</html>
