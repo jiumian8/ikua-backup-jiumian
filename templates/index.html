@@ -2,86 +2,181 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>爱快定时备份系统</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iKuai自动备份系统</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f8f9fa; padding-top: 30px; padding-bottom: 50px; }
-        .card { box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: none; margin-bottom: 20px; }
-        #logOutput { 
-            height: 300px; 
-            background-color: #212529; 
-            color: #20c997; 
-            font-family: monospace; 
-            resize: none; 
-            font-size: 0.9rem;
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --border-color: #e5e7eb;
         }
+        body { 
+            background-color: var(--bg-color); 
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            color: var(--text-main);
+            padding: 40px 0;
+        }
+        .modern-card { 
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+        .modern-header {
+            background: linear-gradient(135deg, var(--primary-color), #818cf8);
+            padding: 20px 24px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modern-header h5 { margin: 0; font-weight: 600; font-size: 1.1rem; letter-spacing: 0.5px;}
+        .card-body { padding: 32px 24px; }
+        
+        .form-label { font-weight: 500; color: var(--text-main); font-size: 0.9rem; margin-bottom: 8px;}
+        .form-control { 
+            border-radius: 8px; 
+            border: 1px solid var(--border-color); 
+            padding: 10px 16px; 
+            transition: all 0.2s;
+            background-color: #f9fafb;
+        }
+        .form-control:focus { 
+            background-color: #fff; 
+            border-color: var(--primary-color); 
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1); 
+        }
+        .section-title {
+            font-size: 1.1rem; font-weight: 600; color: var(--text-main); 
+            margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid var(--bg-color);
+        }
+        
+        .btn-modern {
+            background-color: var(--primary-color); color: white; border-radius: 8px;
+            padding: 10px 20px; font-weight: 500; border: none; transition: all 0.2s;
+        }
+        .btn-modern:hover { background-color: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 4px 6px rgba(79, 70, 229, 0.25); }
+        .btn-trigger { background-color: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4); border-radius: 8px; padding: 6px 16px; font-size: 0.85rem;}
+        .btn-trigger:hover { background-color: rgba(255,255,255,0.3); color: white; }
+
+        /* Mac 风格的终端设计 */
+        .terminal-box {
+            background-color: #1e1e1e;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .terminal-header {
+            background-color: #323233; padding: 12px 16px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .mac-dots { display: flex; gap: 8px; }
+        .mac-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .dot-red { background-color: #ff5f56; }
+        .dot-yellow { background-color: #ffbd2e; }
+        .dot-green { background-color: #27c93f; }
+        
+        .terminal-body {
+            flex-grow: 1; padding: 16px; background-color: #1e1e1e;
+        }
+        #logOutput { 
+            width: 100%; height: 100%; min-height: 500px;
+            background-color: transparent; color: #10b981; 
+            font-family: 'Consolas', 'Monaco', monospace; 
+            border: none; outline: none; resize: none; font-size: 0.85rem; line-height: 1.6;
+        }
+        #logOutput::-webkit-scrollbar { width: 8px; }
+        #logOutput::-webkit-scrollbar-thumb { background-color: #4b5563; border-radius: 4px; }
     </style>
 </head>
 <body>
 <div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-7">
-            <div class="card">
-                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">🚀 爱快定时备份配置</h5>
-                    <button class="btn btn-warning btn-sm fw-bold" onclick="triggerBackup()">立即执行一次</button>
+    <div class="row">
+        <div class="col-lg-7">
+            <div class="modern-card">
+                <div class="modern-header">
+                    <h5>✨ 自动备份配置中心</h5>
+                    <button class="btn-trigger" onclick="triggerBackup()">立刻执行</button>
                 </div>
                 <div class="card-body">
                     <form id="configForm">
-                        <div class="row mb-3">
-                            <div class="col"><label class="form-label text-muted fw-bold">路由器 IP 地址</label><input type="text" class="form-control" id="ikuai_ip" value="{{ config.ikuai_ip }}"></div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col"><label class="form-label text-muted fw-bold">账号</label><input type="text" class="form-control" id="ikuai_user" value="{{ config.ikuai_user }}"></div>
-                            <div class="col"><label class="form-label text-muted fw-bold">密码</label><input type="password" class="form-control" id="ikuai_pass" value="{{ config.ikuai_pass }}"></div>
-                        </div>
-                        <div class="row mb-3 mt-4">
-                            <div class="col"><label class="form-label text-muted fw-bold">CD2 API 地址 (IP:端口)</label><input type="text" class="form-control" id="cd2_address" value="{{ config.cd2_address }}"></div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col"><label class="form-label text-muted fw-bold">账号</label><input type="text" class="form-control" id="cd2_user" value="{{ config.cd2_user }}"></div>
-                            <div class="col"><label class="form-label text-muted fw-bold">密码</label><input type="password" class="form-control" id="cd2_pass" value="{{ config.cd2_pass }}"></div>
-                        </div>
+                        <div class="section-title">🌐 爱快路由设置</div>
                         <div class="mb-3">
-                            <label class="form-label text-muted fw-bold">CD2 目标存储路径</label>
+                            <label class="form-label">路由地址 (IP:Port)</label>
+                            <input type="text" class="form-control" id="ikuai_ip" value="{{ config.ikuai_ip }}" placeholder="例如 http://192.168.1.1">
+                        </div>
+                        <div class="row mb-4">
+                            <div class="col-md-6 mb-3 mb-md-0"><label class="form-label">账号</label><input type="text" class="form-control" id="ikuai_user" value="{{ config.ikuai_user }}"></div>
+                            <div class="col-md-6"><label class="form-label">密码</label><input type="password" class="form-control" id="ikuai_pass" value="{{ config.ikuai_pass }}"></div>
+                        </div>
+
+                        <div class="section-title mt-2">☁️ CloudDrive2 设置</div>
+                        <div class="mb-3">
+                            <label class="form-label">CD2 API 地址</label>
+                            <input type="text" class="form-control" id="cd2_address" value="{{ config.cd2_address }}">
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6 mb-3 mb-md-0"><label class="form-label">账号</label><input type="text" class="form-control" id="cd2_user" value="{{ config.cd2_user }}"></div>
+                            <div class="col-md-6"><label class="form-label">密码</label><input type="password" class="form-control" id="cd2_pass" value="{{ config.cd2_pass }}"></div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label">网盘存储路径</label>
                             <input type="text" class="form-control" id="cd2_path" value="{{ config.cd2_path }}">
                         </div>
-                        <div class="row mb-3 mt-4">
-                            <div class="col">
-                                <label class="form-label text-muted fw-bold">保留天数 (超过将删除)</label>
+
+                        <div class="section-title mt-2">⏱️ 调度策略</div>
+                        <div class="row mb-4">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <label class="form-label">保留策略</label>
                                 <div class="input-group">
-                                    <input type="number" class="form-control" id="retain_days" value="{{ config.retain_days }}">
-                                    <span class="input-group-text">天</span>
+                                    <span class="input-group-text bg-white">保留最近</span>
+                                    <input type="number" class="form-control border-start-0 border-end-0 text-center" id="retain_days" value="{{ config.retain_days }}">
+                                    <span class="input-group-text bg-white">天</span>
                                 </div>
                             </div>
-                            <div class="col">
-                                <label class="form-label text-muted fw-bold">Cron 定时表达式</label>
-                                <input type="text" class="form-control" id="cron_schedule" value="{{ config.cron_schedule }}">
-                                <small class="text-muted">默认: 0 3 * * * (每天凌晨3点)</small>
+                            <div class="col-md-6">
+                                <label class="form-label">Cron 表达式</label>
+                                <input type="text" class="form-control text-center text-primary fw-bold" id="cron_schedule" value="{{ config.cron_schedule }}">
                             </div>
                         </div>
-                        <div class="d-grid mt-4">
-                            <button type="button" class="btn btn-success" onclick="saveConfig()">💾 保存配置并生效</button>
+                        
+                        <div class="d-grid mt-4 pt-2">
+                            <button type="button" class="btn-modern" onclick="saveConfig()">保存配置并重载服务</button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-5">
-            <div class="card h-100">
-                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">📜 运行日志</h5>
+        <div class="col-lg-5">
+            <div class="terminal-box">
+                <div class="terminal-header">
+                    <div class="mac-dots">
+                        <div class="mac-dot dot-red"></div>
+                        <div class="mac-dot dot-yellow"></div>
+                        <div class="mac-dot dot-green"></div>
+                    </div>
+                    <div class="text-secondary" style="font-size:0.8rem; font-family:monospace">iKuai_Backup_Log_Terminal</div>
                     <div>
                         <div class="form-check form-switch d-inline-block me-2">
                             <input class="form-check-input" type="checkbox" id="autoRefresh" checked>
-                            <label class="form-check-label text-white text-opacity-75" for="autoRefresh"><small>自动刷新</small></label>
                         </div>
-                        <button class="btn btn-outline-light btn-sm" onclick="clearLogs()">清空</button>
+                        <button class="btn btn-sm btn-outline-secondary" style="font-size:0.7rem; padding: 2px 6px;" onclick="clearLogs()">清空</button>
                     </div>
                 </div>
-                <div class="card-body p-0">
-                    <textarea class="form-control border-0 rounded-0 w-100 p-3" id="logOutput" readonly></textarea>
+                <div class="terminal-body">
+                    <textarea id="logOutput" readonly>加载日志中...</textarea>
                 </div>
             </div>
         </div>
@@ -89,7 +184,6 @@
 </div>
 
 <script>
-// 获取与保存配置
 function getFormData() {
     return {
         "ikuai_ip": document.getElementById('ikuai_ip').value,
@@ -113,22 +207,18 @@ function saveConfig() {
 }
 
 function triggerBackup() {
-    if(confirm("确定要在后台立即触发一次备份吗？")) {
+    if(confirm("将立即在后台运行一次完整的备份流，确认执行？")) {
         fetch('/api/trigger', { method: 'POST' })
-        .then(res => res.json()).then(data => {
-            fetchLogs(); // 立即刷一次日志
-        });
+        .then(res => res.json()).then(data => { fetchLogs(); });
     }
 }
 
-// 日志逻辑
 function fetchLogs() {
     fetch('/api/logs')
     .then(res => res.json())
     .then(data => {
         const logBox = document.getElementById('logOutput');
-        // 只有当有新内容时才滚动，避免干扰用户往上翻看
-        const isScrolledToBottom = logBox.scrollHeight - logBox.clientHeight <= logBox.scrollTop + 10;
+        const isScrolledToBottom = logBox.scrollHeight - logBox.clientHeight <= logBox.scrollTop + 20;
         logBox.value = data.logs;
         if(isScrolledToBottom) {
             logBox.scrollTop = logBox.scrollHeight;
@@ -140,14 +230,10 @@ function clearLogs() {
     fetch('/api/clear_logs', {method: 'POST'}).then(() => fetchLogs());
 }
 
-// 定时拉取日志 (每 2 秒)
 setInterval(() => {
-    if(document.getElementById('autoRefresh').checked) {
-        fetchLogs();
-    }
+    if(document.getElementById('autoRefresh').checked) { fetchLogs(); }
 }, 2000);
 
-// 页面加载完成拉取一次
 window.onload = fetchLogs;
 </script>
 </body>
