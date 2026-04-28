@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  ikuai-backup:
+    image: jiumianex/ikuai-backup:latest
+    container_name: ikuai-backup
+    restart: unless-stopped
+    ports:
+      - "5080:5000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - TZ=Asia/Shanghai
+      - WEB_USER=admin
+      - WEB_PASS=admin123456
+      
