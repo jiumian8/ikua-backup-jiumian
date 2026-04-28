@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>爱快自动备份</title>
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cdefs%3E%3ClinearGradient id='macGrad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%235AC8FA'/%3E%3Cstop offset='100%25' stop-color='%23007AFF'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='256' height='256' rx='60' fill='url(%23macGrad)'/%3E%3Cpath d='M184 172H88c-22.1 0-40-17.9-40-40 0-21.4 16.8-38.9 38-39.9C91.9 69.3 113.8 52 138 52c24.6 0 45.4 17.7 50.4 41.1 2.5-.7 5-1.1 7.6-1.1 22.1 0 40 17.9 40 40 0 22.1-17.9 40-40 40z' fill='%23FFFFFF'/%3E%3Cpath d='M138 92c-15.5 0-28 12.5-28 28h-8l14 14 14-14h-8c0-11 9-20 20-20s20 9 20 20-9 20-20 20c-3.3 0-6.4-.8-9.2-2.2l-5.8 5.8c4.3 2.8 9.4 4.4 15 4.4 15.5 0 28-12.5 28-28s-12.5-28-28-28z' fill='%23007AFF'/%3E%3C/svg%3E">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cdefs%3E%3ClinearGradient id='macGrad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%235AC8FA'/%3E%3Cstop offset='100%25' stop-color='%23007AFF'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='256' height='256' rx='60' fill='url(%23macGrad)'/%3E%3Cg transform='translate(-8, 20)'%3E%3Cpath d='M184 172H88c-22.1 0-40-17.9-40-40 0-21.4 16.8-38.9 38-39.9C91.9 69.3 113.8 52 138 52c24.6 0 45.4 17.7 50.4 41.1 2.5-.7 5-1.1 7.6-1.1 22.1 0 40 17.9 40 40 0 22.1-17.9 40-40 40z' fill='%23FFFFFF'/%3E%3Cpath d='M138 92c-15.5 0-28 12.5-28 28h-8l14 14 14-14h-8c0-11 9-20 20-20s20 9 20 20-9 20-20 20c-3.3 0-6.4-.8-9.2-2.2l-5.8 5.8c4.3 2.8 9.4 4.4 15 4.4 15.5 0 28-12.5 28-28s-12.5-28-28-28z' fill='%23007AFF'/%3E%3C/g%3E%3C/svg%3E">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -15,14 +15,14 @@
             font-family: 'Inter', -apple-system, system-ui, sans-serif;
             height: 100vh;
             display: flex; justify-content: center; align-items: center;
-            background: linear-gradient(135deg, #FF99CC 0%, #FFCC99 100%); /* 仿 macOS 弥散渐变 */
+            background: linear-gradient(135deg, #FF99CC 0%, #FFCC99 100%);
         }
         .login-box {
-            background: rgba(255, 255, 255, 0.5);
-            backdrop-filter: blur(25px); /* 更深的高斯模糊 */
-            -webkit-backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.55);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 24px;
             padding: 50px 40px;
             width: 340px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
@@ -33,43 +33,27 @@
         h2 { margin: 0 0 10px 0; font-weight: 600; color: #1D1D1F; font-size: 24px; letter-spacing: -0.5px; }
         p { color: #86868B; font-size: 15px; margin-bottom: 40px; font-weight: 400;}
 
-        /* 输入框区域：关键修改，解决图标居中 */
         .input-group { 
-            position: relative; 
-            margin-bottom: 20px; 
-            border-bottom: 1px solid rgba(0,0,0,0.1); /* 改为极简下划线 */
-            padding: 8px 0;
+            position: relative; margin-bottom: 20px; 
+            border-bottom: 1px solid rgba(0,0,0,0.1); padding: 8px 0;
         }
         .input-group-text {
-            position: absolute;
-            left: 0;
-            top: 50%;
-            transform: translateY(-50%); /* 这里是垂直居中的核心 */
-            color: rgba(0,0,0,0.5);
-            width: 32px;
-            display: flex; justify-content: center; align-items: center;
+            position: absolute; left: 0; top: 50%; transform: translateY(-50%); 
+            color: rgba(0,0,0,0.4); width: 32px; display: flex; justify-content: center; align-items: center;
         }
         .input-control {
-            width: 100%; box-sizing: border-box;
-            padding: 12px 10px 12px 36px; /* 腾出左侧给图标 */
-            border-radius: 0; /* 去掉大圆角 */
-            border: none; /* 去掉自带边框 */
-            background: transparent;
-            font-size: 16px; outline: none;
-            transition: all 0.2s ease;
-            color: #1D1D1F;
+            width: 100%; box-sizing: border-box; padding: 12px 10px 12px 36px;
+            border-radius: 0; border: none; background: transparent;
+            font-size: 16px; outline: none; transition: all 0.2s ease; color: #1D1D1F;
         }
-        /* 密码输入框的白色图标改为跟随文本颜色，并精细化位置 */
         .input-control::placeholder { color: rgba(0,0,0,0.35); }
         .input-group:focus-within { border-bottom: 2px solid var(--apple-blue); }
 
         .btn-modern {
-            width: 100%; padding: 14px;
-            border-radius: 14px;
-            background-color: var(--apple-blue);
+            width: 100%; padding: 14px; border-radius: 14px; background-color: var(--apple-blue);
             color: white; border: none; font-size: 16px; font-weight: 600;
             cursor: pointer; transition: all 0.2s; margin-top: 15px;
-            box-shadow: 0 4px 6px rgba(0, 122, 255, 0.2);
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.25);
         }
         .btn-modern:hover { background-color: #0062CC; transform: scale(0.98); }
         .error-msg { color: #FF3B30; font-size: 14px; margin-top: 20px; display: none; font-weight: 500;}
@@ -79,16 +63,21 @@
 
 <div class="login-box">
     <div class="logo-area">
-        <svg width="80" height="80" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+        <svg width="84" height="84" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
             <defs>
                 <linearGradient id="macGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stop-color="#5AC8FA" />
                     <stop offset="100%" stop-color="#007AFF" />
                 </linearGradient>
+                <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+                    <feDropShadow dx="0" dy="8" stdDeviation="10" flood-opacity="0.15"/>
+                </filter>
             </defs>
-            <rect width="256" height="256" rx="60" fill="url(#macGrad)"/>
-            <path d="M184 172H88c-22.1 0-40-17.9-40-40 0-21.4 16.8-38.9 38-39.9C91.9 69.3 113.8 52 138 52c24.6 0 45.4 17.7 50.4 41.1 2.5-.7 5-1.1 7.6-1.1 22.1 0 40 17.9 40 40 0 22.1-17.9 40-40 40z" fill="#FFFFFF"/>
-            <path d="M138 92c-15.5 0-28 12.5-28 28h-8l14 14 14-14h-8c0-11 9-20 20-20s20 9 20 20-9 20-20 20c-3.3 0-6.4-.8-9.2-2.2l-5.8 5.8c4.3 2.8 9.4 4.4 15 4.4 15.5 0 28-12.5 28-28s-12.5-28-28-28z" fill="#007AFF"/>
+            <rect width="256" height="256" rx="60" fill="url(#macGrad)" filter="url(#shadow)"/>
+            <g transform="translate(-8, 20)">
+                <path d="M184 172H88c-22.1 0-40-17.9-40-40 0-21.4 16.8-38.9 38-39.9C91.9 69.3 113.8 52 138 52c24.6 0 45.4 17.7 50.4 41.1 2.5-.7 5-1.1 7.6-1.1 22.1 0 40 17.9 40 40 0 22.1-17.9 40-40 40z" fill="#FFFFFF"/>
+                <path d="M138 92c-15.5 0-28 12.5-28 28h-8l14 14 14-14h-8c0-11 9-20 20-20s20 9 20 20-9 20-20 20c-3.3 0-6.4-.8-9.2-2.2l-5.8 5.8c4.3 2.8 9.4 4.4 15 4.4 15.5 0 28-12.5 28-28s-12.5-28-28-28z" fill="#007AFF"/>
+            </g>
         </svg>
     </div>
     <h2>数据安全最重要</h2>
@@ -112,27 +101,20 @@
 
 <script>
     function handleEnter(e) { if(e.key === 'Enter') login(); }
-
     function login() {
         const u = document.getElementById('username').value;
         const p = document.getElementById('password').value;
-        
         fetch('/login', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({username: u, password: p})
-        })
-        .then(res => {
+        }).then(res => {
             if(res.ok) window.location.href = '/';
             else {
                 document.getElementById('errorMsg').style.display = 'block';
                 const box = document.querySelector('.login-box');
-                // 增加震动特效，更有苹果质感
-                box.animate([
-                    { transform: 'translateX(0px)' },
-                    { transform: 'translateX(-5px)' },
-                    { transform: 'translateX(5px)' },
-                    { transform: 'translateX(0px)' }
+                box.animate([{ transform: 'translateX(0px)' }, { transform: 'translateX(-5px)' },
+                             { transform: 'translateX(5px)' }, { transform: 'translateX(0px)' }
                 ], { duration: 150, iterations: 2 });
             }
         });
