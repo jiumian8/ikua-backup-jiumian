@@ -5,89 +5,108 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>爱快自动备份</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cdefs%3E%3ClinearGradient id='macGrad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%235AC8FA'/%3E%3Cstop offset='100%25' stop-color='%23007AFF'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='256' height='256' rx='60' fill='url(%23macGrad)'/%3E%3Cpath d='M184 172H88c-22.1 0-40-17.9-40-40 0-21.4 16.8-38.9 38-39.9C91.9 69.3 113.8 52 138 52c24.6 0 45.4 17.7 50.4 41.1 2.5-.7 5-1.1 7.6-1.1 22.1 0 40 17.9 40 40 0 22.1-17.9 40-40 40z' fill='%23FFFFFF'/%3E%3Cpath d='M138 92c-15.5 0-28 12.5-28 28h-8l14 14 14-14h-8c0-11 9-20 20-20s20 9 20 20-9 20-20 20c-3.3 0-6.4-.8-9.2-2.2l-5.8 5.8c4.3 2.8 9.4 4.4 15 4.4 15.5 0 28-12.5 28-28s-12.5-28-28-28z' fill='%23007AFF'/%3E%3C/svg%3E">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
             --apple-blue: #007AFF;
         }
         body {
             margin: 0; padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+            font-family: 'Inter', -apple-system, system-ui, sans-serif;
             height: 100vh;
             display: flex; justify-content: center; align-items: center;
-            background: linear-gradient(135deg, #E2D1C3 0%, #FDFCFB 100%);
+            background: linear-gradient(135deg, #FF99CC 0%, #FFCC99 100%); /* 仿 macOS 弥散渐变 */
         }
-        .login-container {
-            background: rgba(255, 255, 255, 0.65);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.5);
+        .login-box {
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(25px); /* 更深的高斯模糊 */
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
             border-radius: 20px;
-            padding: 40px;
-            width: 320px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            padding: 50px 40px;
+            width: 340px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
             text-align: center;
         }
-        .logo-icon {
-            margin-bottom: 15px;
-        }
-        h2 { margin: 0 0 8px 0; font-weight: 600; color: #1D1D1F; font-size: 22px; }
-        p { color: #86868B; font-size: 14px; margin-bottom: 30px; font-weight: 500; }
+        .logo-area { margin-bottom: 25px; }
         
-        .input-group { margin-bottom: 16px; }
-        input {
+        h2 { margin: 0 0 10px 0; font-weight: 600; color: #1D1D1F; font-size: 24px; letter-spacing: -0.5px; }
+        p { color: #86868B; font-size: 15px; margin-bottom: 40px; font-weight: 400;}
+
+        /* 输入框区域：关键修改，解决图标居中 */
+        .input-group { 
+            position: relative; 
+            margin-bottom: 20px; 
+            border-bottom: 1px solid rgba(0,0,0,0.1); /* 改为极简下划线 */
+            padding: 8px 0;
+        }
+        .input-group-text {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%); /* 这里是垂直居中的核心 */
+            color: rgba(0,0,0,0.5);
+            width: 32px;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .input-control {
             width: 100%; box-sizing: border-box;
-            padding: 12px 16px;
-            border-radius: 12px;
-            border: 1px solid rgba(0,0,0,0.1);
-            background: rgba(255,255,255,0.8);
-            font-size: 15px; outline: none;
+            padding: 12px 10px 12px 36px; /* 腾出左侧给图标 */
+            border-radius: 0; /* 去掉大圆角 */
+            border: none; /* 去掉自带边框 */
+            background: transparent;
+            font-size: 16px; outline: none;
             transition: all 0.2s ease;
+            color: #1D1D1F;
         }
-        input:focus {
-            border-color: var(--apple-blue);
-            box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.15);
-            background: #fff;
-        }
-        .btn {
-            width: 100%; padding: 12px;
-            border-radius: 12px;
+        /* 密码输入框的白色图标改为跟随文本颜色，并精细化位置 */
+        .input-control::placeholder { color: rgba(0,0,0,0.35); }
+        .input-group:focus-within { border-bottom: 2px solid var(--apple-blue); }
+
+        .btn-modern {
+            width: 100%; padding: 14px;
+            border-radius: 14px;
             background-color: var(--apple-blue);
-            color: white; border: none; font-size: 15px; font-weight: 600;
-            cursor: pointer; transition: all 0.2s; margin-top: 10px;
+            color: white; border: none; font-size: 16px; font-weight: 600;
+            cursor: pointer; transition: all 0.2s; margin-top: 15px;
+            box-shadow: 0 4px 6px rgba(0, 122, 255, 0.2);
         }
-        .btn:hover { background-color: #0062CC; transform: scale(0.98); }
-        .error-msg { color: #FF3B30; font-size: 13px; margin-top: 15px; display: none; }
+        .btn-modern:hover { background-color: #0062CC; transform: scale(0.98); }
+        .error-msg { color: #FF3B30; font-size: 14px; margin-top: 20px; display: none; font-weight: 500;}
     </style>
 </head>
 <body>
 
-<div class="login-container">
-    <div class="logo-icon">
-        <svg width="72" height="72" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+<div class="login-box">
+    <div class="logo-area">
+        <svg width="80" height="80" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
             <defs>
                 <linearGradient id="macGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stop-color="#5AC8FA" />
                     <stop offset="100%" stop-color="#007AFF" />
                 </linearGradient>
-                <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-                    <feDropShadow dx="0" dy="12" stdDeviation="12" flood-opacity="0.15"/>
-                </filter>
             </defs>
-            <rect width="256" height="256" rx="60" fill="url(#macGrad)" filter="url(#shadow)"/>
+            <rect width="256" height="256" rx="60" fill="url(#macGrad)"/>
             <path d="M184 172H88c-22.1 0-40-17.9-40-40 0-21.4 16.8-38.9 38-39.9C91.9 69.3 113.8 52 138 52c24.6 0 45.4 17.7 50.4 41.1 2.5-.7 5-1.1 7.6-1.1 22.1 0 40 17.9 40 40 0 22.1-17.9 40-40 40z" fill="#FFFFFF"/>
             <path d="M138 92c-15.5 0-28 12.5-28 28h-8l14 14 14-14h-8c0-11 9-20 20-20s20 9 20 20-9 20-20 20c-3.3 0-6.4-.8-9.2-2.2l-5.8 5.8c4.3 2.8 9.4 4.4 15 4.4 15.5 0 28-12.5 28-28s-12.5-28-28-28z" fill="#007AFF"/>
         </svg>
     </div>
-    <h2>爱快自动备份</h2>
-    <p>数据安全最重要</p>
+    <h2>数据安全最重要</h2>
+    <p>爱快自动备份</p>
     
     <div class="input-group">
-        <input type="text" id="username" placeholder="账号" autocomplete="off">
+        <span class="input-group-text">
+            <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/></svg>
+        </span>
+        <input type="text" id="username" class="input-control" placeholder="管理员账号" autocomplete="off">
     </div>
     <div class="input-group">
-        <input type="password" id="password" placeholder="密码" autocomplete="off" onkeypress="handleEnter(event)">
+        <span class="input-group-text">
+            <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/></svg>
+        </span>
+        <input type="password" id="password" class="input-control" placeholder="密码" autocomplete="off" onkeypress="handleEnter(event)">
     </div>
-    <button class="btn" onclick="login()">登 录</button>
+    <button class="btn-modern" onclick="login()">登 录</button>
     <div class="error-msg" id="errorMsg">账号或密码错误</div>
 </div>
 
@@ -107,10 +126,14 @@
             if(res.ok) window.location.href = '/';
             else {
                 document.getElementById('errorMsg').style.display = 'block';
-                const box = document.querySelector('.login-container');
-                box.style.transform = 'translateX(-5px)';
-                setTimeout(() => box.style.transform = 'translateX(5px)', 100);
-                setTimeout(() => box.style.transform = 'translateX(0)', 200);
+                const box = document.querySelector('.login-box');
+                // 增加震动特效，更有苹果质感
+                box.animate([
+                    { transform: 'translateX(0px)' },
+                    { transform: 'translateX(-5px)' },
+                    { transform: 'translateX(5px)' },
+                    { transform: 'translateX(0px)' }
+                ], { duration: 150, iterations: 2 });
             }
         });
     }
