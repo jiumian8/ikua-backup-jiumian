@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统登录 - 自动备份</title>
+    <style>
+        :root {
+            --apple-blue: #007AFF;
+        }
+        body {
+            margin: 0; padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+            height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+            /* 模仿 macOS 壁纸渐变风格 */
+            background: linear-gradient(135deg, #E2D1C3 0%, #FDFCFB 100%);
+        }
+        .login-container {
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 20px;
+            padding: 40px;
+            width: 320px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .logo-icon {
+            font-size: 48px; margin-bottom: 10px;
+        }
+        h2 { margin: 0 0 8px 0; font-weight: 600; color: #1D1D1F; font-size: 22px; }
+        p { color: #86868B; font-size: 14px; margin-bottom: 30px; }
+        
+        .input-group { margin-bottom: 16px; }
+        input {
+            width: 100%; box-sizing: border-box;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid rgba(0,0,0,0.1);
+            background: rgba(255,255,255,0.8);
+            font-size: 15px; outline: none;
+            transition: all 0.2s ease;
+        }
+        input:focus {
+            border-color: var(--apple-blue);
+            box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.15);
+            background: #fff;
+        }
+        .btn {
+            width: 100%; padding: 12px;
+            border-radius: 12px;
+            background-color: var(--apple-blue);
+            color: white; border: none; font-size: 15px; font-weight: 600;
+            cursor: pointer; transition: all 0.2s; margin-top: 10px;
+        }
+        .btn:hover { background-color: #0062CC; transform: scale(0.98); }
+        .error-msg { color: #FF3B30; font-size: 13px; margin-top: 15px; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="login-container">
+    <div class="logo-icon">☁️</div>
+    <h2>iKuai Backup</h2>
+    <p>请输入系统凭证以继续</p>
+    
+    <div class="input-group">
+        <input type="text" id="username" placeholder="管理员账号" autocomplete="off">
+    </div>
+    <div class="input-group">
+        <input type="password" id="password" placeholder="密码" autocomplete="off" onkeypress="handleEnter(event)">
+    </div>
+    <button class="btn" onclick="login()">登 录</button>
+    <div class="error-msg" id="errorMsg">账号或密码错误</div>
+</div>
+
+<script>
+    function handleEnter(e) { if(e.key === 'Enter') login(); }
+
+    function login() {
+        const u = document.getElementById('username').value;
+        const p = document.getElementById('password').value;
+        
+        fetch('/login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({username: u, password: p})
+        })
+        .then(res => {
+            if(res.ok) window.location.href = '/';
+            else {
+                document.getElementById('errorMsg').style.display = 'block';
+                // 震动动画提示错误
+                const box = document.querySelector('.login-container');
+                box.style.transform = 'translateX(-5px)';
+                setTimeout(() => box.style.transform = 'translateX(5px)', 100);
+                setTimeout(() => box.style.transform = 'translateX(0)', 200);
+            }
+        });
+    }
+</script>
+</body>
+</html>
