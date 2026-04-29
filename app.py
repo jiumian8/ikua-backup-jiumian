@@ -16,7 +16,6 @@ import clouddrive_pb2
 import clouddrive_pb2_grpc
 
 app = Flask(__name__)
-# 设置 Session 密钥
 app.secret_key = os.getenv("SECRET_KEY", os.urandom(24).hex())
 
 CONFIG_FILE = "/app/data/config.json"
@@ -44,7 +43,6 @@ def logout():
 
 @app.before_request
 def require_auth():
-    # 静态文件和登录路由不拦截，其他必须登录
     if request.endpoint not in ['login', 'static'] and not session.get('logged_in'):
         if request.path.startswith('/api/'):
             return jsonify({"status": "error", "msg": "未登录"}), 401
@@ -78,16 +76,23 @@ default_config = {
     "cd2_pass": "",
     "cd2_path": "/阿里云盘/爱快备份",
     "retain_days": 7,
+    "local_retain_days": 3,  # 新增：路由本地默认保留3天
     "cron_schedule": "0 3 * * *"
 }
 
 scheduler = BackgroundScheduler()
 
 def load_config():
+    # 智能合并配置：防止旧版 config.json 缺少新字段报错
+    cfg = default_config.copy()
     if os.path.exists(CONFIG_FILE):
-        with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    return default_config
+        try:
+            with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+                user_cfg = json.load(f)
+                cfg.update(user_cfg)
+        except Exception:
+            pass
+    return cfg
 
 def save_config(config):
     with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
@@ -131,7 +136,7 @@ class IKuaiManager:
         backups = res.get("Data", {}).get("data", [])
         if not backups:
             logger.warning("⚠️ 未能获取到爱快备份文件列表。")
-            return None
+            return None, None
         filename = backups[0]['name']
 
         logger.info(f"⏳ 准备导出文件: {filename}")
@@ -144,14 +149,46 @@ class IKuaiManager:
         
         os.makedirs(save_dir, exist_ok=True)
         local_path = os.path.join(save_dir, filename)
-        logger.info(f"⏳ 开始拉取备份文件到本地...")
+        logger.info(f"⏳ 开始拉取备份文件到系统缓存...")
         with self.session.get(url_dl, headers=dl_headers, stream=True) as r:
             r.raise_for_status()
             with open(local_path, 'wb') as f:
                 for chunk in r.iter_content(chunk_size=8192):
                     f.write(chunk)
-        logger.info(f"✅ 本地下载完成: {filename}")
-        return local_path
+        logger.info(f"✅ 缓存下载完成: {filename}")
+        return local_path, filename
+
+    def delete_backup(self, filename):
+        url = f"{self.ip}/Action/call"
+        payload = {"func_name": "backup", "action": "delete", "param": {"srcfile": filename}}
+        try:
+            self.session.post(url, json=payload, headers=self.headers, timeout=10)
+        except Exception as e:
+            logger.error(f"❌ 爱快删除异常: {e}")
+
+    def clean_old_backups(self, retain_days):
+        logger.info(f"⏳ 正在检查爱快路由器本地历史备份 (策略: 保留 {retain_days} 天)...")
+        res = self.session.post(f"{self.ip}/Action/call", json={"func_name": "backup", "action": "show", "param": {"TYPE": "data,disk"}}, headers=self.headers).json()
+        backups = res.get("Data", {}).get("data", [])
+        
+        now = datetime.datetime.now()
+        deleted_count = 0
+        for b in backups:
+            name = b.get("name")
+            date_str = b.get("date")  # 例如: "2026-04-28 20:14:17"
+            if name and date_str:
+                try:
+                    b_date = datetime.datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
+                    if (now - b_date).days >= retain_days:
+                        self.delete_backup(name)
+                        deleted_count += 1
+                except Exception as e:
+                    logger.warning(f"⚠️ 解析备份日期失败: {date_str}, {e}")
+        
+        if deleted_count > 0:
+            logger.info(f"✅ 爱快路由清理完成：共释放了 {deleted_count} 个过期本地备份包。")
+        else:
+            logger.info("✅ 爱快路由状态健康：暂无过期本地备份需清理。")
 
 class CD2Manager:
     def __init__(self, address):
@@ -208,28 +245,40 @@ class CD2Manager:
                             files_to_delete.append(f.fullPathName)
             
             if files_to_delete:
-                logger.info(f"⏳ 发现 {len(files_to_delete)} 个过期备份，正在清理...")
+                logger.info(f"⏳ CD2云盘：发现 {len(files_to_delete)} 个过期备份，正在执行云端清理...")
                 del_req = clouddrive_pb2.MultiFileRequest(path=files_to_delete)
                 self.stub.DeleteFiles(del_req, metadata=meta)
-                logger.info("✅ 清理过期备份完成。")
+                logger.info("✅ CD2云盘清理完成。")
+            else:
+                logger.info("✅ CD2云盘状态健康：暂无过期备份。")
         except Exception as e:
-            logger.error(f"❌ 清理旧备份失败: {e}")
+            logger.error(f"❌ 云端清理旧备份失败: {e}")
 
 def execute_backup_job():
     logger.info("==========================================")
-    logger.info("🚀 启动自动化备份任务")
+    logger.info("🚀 启动全链路自动化备份任务")
     cfg = load_config()
     
     ikuai = IKuaiManager(cfg['ikuai_ip'], cfg['ikuai_user'], cfg['ikuai_pass'])
     cd2 = CD2Manager(cfg['cd2_address'])
 
     if ikuai.login():
-        local_path = ikuai.process_backup(TEMP_DIR)
+        local_path, filename = ikuai.process_backup(TEMP_DIR)
         if local_path and cd2.login(cfg['cd2_user'], cfg['cd2_pass']):
+            
+            # 1. 核心流程：同步至云端
             cd2.upload_file(local_path, cfg['cd2_path'])
+            
+            # 2. 生命周期管理：清理云端旧备份
             cd2.clean_old_backups(cfg['cd2_path'], int(cfg['retain_days']))
+            
+            # 3. 生命周期管理：清理爱快路由器本地旧备份
+            ikuai.clean_old_backups(int(cfg['local_retain_days']))
+            
+            # 4. 环境清理：抹除 Docker 容器内下载缓存
             os.remove(local_path)
-            logger.info("🎉 整个备份流水线圆满结束！临时文件已清理。")
+            
+            logger.info("🎉 备份流水线圆满结束！云/端双备份清理策略已执行。")
         else:
             logger.error("❌ CD2登录失败或备份拉取失败，流程终止。")
     else:
@@ -241,7 +290,7 @@ def update_scheduler():
     scheduler.remove_all_jobs()
     try:
         scheduler.add_job(execute_backup_job, CronTrigger.from_crontab(cfg['cron_schedule']))
-        logger.info(f"⚙️ 调度器已重置，当前 Cron: {cfg['cron_schedule']}")
+        logger.info(f"⚙️ 调度器已重载 | Cron: {cfg['cron_schedule']} | 云保留: {cfg['retain_days']}天 | 路由保留: {cfg['local_retain_days']}天")
     except Exception as e:
         logger.error(f"❌ Cron 表达式错误: {e}")
 
@@ -255,7 +304,7 @@ def save_cfg():
     data = request.json
     save_config(data)
     update_scheduler()
-    logger.info("💾 配置已从网页端保存更新。")
+    logger.info("💾 节点配置已从网页端更新。")
     return jsonify({"status": "success", "msg": "配置已保存并生效！"})
 
 @app.route('/api/trigger', methods=['POST'])
