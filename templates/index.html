@@ -27,86 +27,66 @@
             display: flex; align-items: center; gap: 12px;
         }
 
-        /* 绝对对齐的卡片体系 */
-        .apple-card { 
-            background: #FFFFFF; border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05); border: none; 
-            padding: 35px; display: flex; flex-direction: column;
-        }
-        .mac-terminal {
-            background-color: #1E1E1E; border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
-            overflow: hidden; display: flex; flex-direction: column;
+        .suite-wrapper {
+            background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.05); display: flex; overflow: hidden;
         }
 
+        .parameter-pane { flex: 0 0 620px; padding: 30px; border-right: 1px solid rgba(0, 0, 0, 0.05); }
         .pane-header {
             display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid rgba(0,0,0,0.05);
+            margin-bottom: 25px; padding-bottom: 12px; border-bottom: 1px solid rgba(0,0,0,0.05);
         }
-        .pane-header h5 { margin:0; font-weight:600; font-size:18px;}
+        .pane-header h5 { margin:0; font-weight:600; font-size:16px;}
         
-        .form-label { font-weight: 500; font-size: 13.5px; margin-bottom: 6px;}
+        .form-label { font-weight: 500; color: var(--text-main); font-size: 13.5px; margin-bottom: 6px;}
         .form-control { 
-            border-radius: 10px; border: 1px solid #E5E5E7; 
-            padding: 10px 14px; background-color: #F9FAFB; font-size: 14.5px; transition: all 0.2s;
+            border-radius: 9px; border: 1px solid #E5E5E7; 
+            padding: 9px 12px; background-color: rgba(0,0,0,0.02); font-size: 14px; transition: all 0.2s;
         }
-        .form-control:focus { 
-            background-color: #fff; border-color: var(--apple-blue); 
-            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15); 
-        }
+        .form-control:focus { background-color: #fff; border-color: var(--apple-blue); box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15); }
 
-        /* 终端头部细节 */
+        .terminal-pane { flex: 1; background-color: #1E1E1E; display: flex; flex-direction: column; }
         .terminal-header {
-            background-color: #323233; padding: 12px 18px;
-            display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            background-color: #323233; padding: 10px 15px;
+            display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05);
         }
-        .mac-dots { display: flex; gap: 8px; width: 60px;}
-        .mac-dot { width: 12px; height: 12px; border-radius: 50%; }
-        .dot-red { background-color: #FF5F56; cursor: pointer; }
+        .mac-dots { display: flex; gap: 7px; }
+        .mac-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .dot-red { background-color: #FF5F56; cursor: pointer;}
         .dot-red:hover { opacity: 0.8; }
         .dot-yellow { background-color: #FFBD2E; }
         .dot-green { background-color: #27C93F; }
-        .terminal-title { color: #9A9AA1; font-size: 12px; font-weight: 600; font-family: monospace; text-align: center; flex: 1;}
-        
-        .ios-toggle-label {
-            display: flex; align-items: center; gap: 8px; font-size: 12px; color: #9A9AA1; width: 60px; justify-content: flex-end;
-        }
-        .ios-switch { position: relative; display: inline-block; width: 36px; height: 20px; }
-        .ios-switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #555; transition: .2s; border-radius: 20px; }
-        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; transition: .2s; border-radius: 50%; }
-        input:checked + .slider { background-color: var(--apple-green); }
-        input:checked + .slider:before { transform: translateX(16px); }
+        .terminal-title { color: #9A9AA1; font-size: 11.5px; font-weight: 600; font-family: monospace; letter-spacing: 0.2px;}
 
         #logOutput { 
-            flex-grow: 1; height: 100%; padding: 20px; 
-            background-color: transparent; color: #4AF626; 
-            font-family: 'SF Mono', Menlo, Consolas, monospace; 
-            border: none; outline: none; resize: none; font-size: 13px; line-height: 1.6;
+            flex-grow: 1; padding: 18px; min-height: 500px; background-color: transparent; color: #4AF626; 
+            font-family: 'SF Mono', Menlo, Consolas, monospace; border: none; outline: none; resize: none; font-size: 12.5px; line-height: 1.6;
         }
         #logOutput::-webkit-scrollbar { width: 8px; }
         #logOutput::-webkit-scrollbar-thumb { background-color: #4C4C4C; border-radius: 4px; }
 
-        .btn-trigger { 
-            background-color: #EBF3FF; color: var(--apple-blue); font-weight: 600; 
-            border-radius: 10px; border: none; padding: 8px 16px; transition: background 0.2s; font-size: 14px;
-        }
+        .ios-toggle-label { position: absolute; right: 15px; top: 12px; font-size: 12px; color: #9A9AA1; display: flex; align-items: center; gap: 7px;}
+        .ios-switch { position: relative; display: inline-block; width: 38px; height: 21px; }
+        .ios-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #E5E5EA; transition: .2s; border-radius: 21px; }
+        .slider:before { position: absolute; content: ""; height: 17px; width: 17px; left: 2px; bottom: 2px; background-color: white; transition: .2s; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+        input:checked + .slider { background-color: var(--apple-green); }
+        input:checked + .slider:before { transform: translateX(17px); }
+
+        .btn-trigger { background-color: #EBF3FF; color: var(--apple-blue); font-weight: 600; border-radius: 9px; border: none; padding: 7px 14px; transition: background 0.2s; font-size: 13.5px; }
         .btn-trigger:hover { background-color: #D6E8FF; }
-        .btn-apple {
-            background-color: var(--apple-blue); color: white; border-radius: 12px;
-            padding: 12px; font-weight: 600; border: none; transition: transform 0.1s; font-size: 15px;
-            box-shadow: 0 4px 10px rgba(0, 122, 255, 0.2); width: 100%;
-        }
-        .btn-apple:hover { background-color: #0062CC; transform: scale(0.98); color: white;}
-        .section-separator { margin: 25px 0 20px 0; border-top: 1px solid rgba(0,0,0,0.06); }
+        .btn-apple { background-color: var(--apple-blue); color: white; border-radius: 12px; padding: 11px; font-weight: 600; border: none; transition: transform 0.1s; font-size: 14px; box-shadow: 0 3px 6px rgba(0, 122, 255, 0.1); }
+        .btn-apple:hover { background-color: #0062CC; transform: scale(0.99); color: white;}
+        .section-separator { margin: 25px 0 20px 0; border-top: 1px solid rgba(0,0,0,0.05); }
     </style>
 </head>
 <body>
 <div class="container-fluid" style="max-width:1300px;">
     <div class="modern-nav">
         <h3>
-            <svg width="30" height="30" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+            <svg style="margin-bottom: 2px;" width="28" height="28" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
                 <defs><linearGradient id="nGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#5AC8FA"/><stop offset="100%" stop-color="#007AFF"/></linearGradient></defs>
                 <rect width="256" height="256" rx="60" fill="url(#nGrad)"/>
                 <g transform="translate(-8, 20)">
@@ -116,74 +96,76 @@
             </svg>
             爱快自动备份
         </h3>
-        <a href="/logout" style="color:#FF3B30; text-decoration:none; font-weight:500; font-size:15px;">安全注销</a>
+        <a href="/logout" style="color:#FF3B30; text-decoration:none; font-weight:500; font-size:14.5px;">安全注销</a>
     </div>
 
-    <div class="row align-items-stretch">
-        
-        <div class="col-lg-6 col-xl-7 mb-4 mb-lg-0 d-flex">
-            <div class="apple-card w-100">
-                <div class="pane-header">
-                    <h5>系统参数配置</h5>
-                    <button class="btn-trigger" onclick="triggerBackup()">手动立即执行</button>
-                </div>
-                <form id="configForm" class="d-flex flex-column flex-grow-1">
-                    <div class="mb-3">
-                        <label class="form-label">iKuai 路由后台地址</label>
-                        <input type="text" class="form-control" id="ikuai_ip" value="{{ config.ikuai_ip }}">
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-6"><label class="form-label">管理员账号</label><input type="text" class="form-control" id="ikuai_user" value="{{ config.ikuai_user }}"></div>
-                        <div class="col-6"><label class="form-label">密码</label><input type="password" class="form-control" id="ikuai_pass" value="{{ config.ikuai_pass }}"></div>
-                    </div>
-
-                    <div class="section-separator"></div>
-
-                    <div class="mb-3">
-                        <label class="form-label">CloudDrive 2 API 节点</label>
-                        <input type="text" class="form-control" id="cd2_address" value="{{ config.cd2_address }}">
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-6"><label class="form-label">CD2 账号</label><input type="text" class="form-control" id="cd2_user" value="{{ config.cd2_user }}"></div>
-                        <div class="col-6"><label class="form-label">CD2 密码</label><input type="password" class="form-control" id="cd2_pass" value="{{ config.cd2_pass }}"></div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">网盘同步目标目录</label>
-                        <input type="text" class="form-control" id="cd2_path" value="{{ config.cd2_path }}">
-                    </div>
-
-                    <div class="section-separator"></div>
-
-                    <div class="row mb-4">
-                        <div class="col-6"><label class="form-label">空间保留策略 (天)</label><input type="number" class="form-control" id="retain_days" value="{{ config.retain_days }}"></div>
-                        <div class="col-6"><label class="form-label">Cron 调度周期</label><input type="text" class="form-control text-primary fw-bold" id="cron_schedule" value="{{ config.cron_schedule }}"></div>
-                    </div>
-                    
-                    <div class="mt-auto pt-2">
-                        <button type="button" class="btn-apple" onclick="saveConfig()">保存参数并重载服务</button>
-                    </div>
-                </form>
+    <div class="suite-wrapper">
+        <div class="parameter-pane">
+            <div class="pane-header">
+                <h5>📊 配置系统参数</h5>
+                <button class="btn-trigger" onclick="triggerBackup()">手动立刻执行</button>
             </div>
+            <form id="configForm" class="d-flex flex-column h-100">
+                <div class="mb-3">
+                    <label class="form-label">iKuai 地址</label>
+                    <input type="text" class="form-control" id="ikuai_ip" value="{{ config.ikuai_ip }}">
+                </div>
+                <div class="row mb-3">
+                    <div class="col-6 mb-md-0"><label class="form-label">管理员账号</label><input type="text" class="form-control" id="ikuai_user" value="{{ config.ikuai_user }}"></div>
+                    <div class="col-6"><label class="form-label">密码</label><input type="password" class="form-control" id="ikuai_pass" value="{{ config.ikuai_pass }}"></div>
+                </div>
+
+                <div class="section-separator"></div>
+
+                <div class="mb-3">
+                    <label class="form-label">CD2 API 节点</label>
+                    <input type="text" class="form-control" id="cd2_address" value="{{ config.cd2_address }}">
+                </div>
+                <div class="row mb-3">
+                    <div class="col-6 mb-md-0"><label class="form-label">账号</label><input type="text" class="form-control" id="cd2_user" value="{{ config.cd2_user }}"></div>
+                    <div class="col-6"><label class="form-label">密码</label><input type="password" class="form-control" id="cd2_pass" value="{{ config.cd2_pass }}"></div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">网盘同步目录</label>
+                    <input type="text" class="form-control" id="cd2_path" value="{{ config.cd2_path }}">
+                </div>
+
+                <div class="section-separator"></div>
+
+                <div class="row mb-3">
+                    <div class="col-6"><label class="form-label">云盘保留策略 (天)</label><input type="number" class="form-control" id="retain_days" value="{{ config.retain_days }}"></div>
+                    <div class="col-6"><label class="form-label">路由本地保留 (天)</label><input type="number" class="form-control" id="local_retain_days" value="{{ config.local_retain_days }}"></div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Cron 调度周期</label>
+                    <input type="text" class="form-control text-primary fw-bold text-center" id="cron_schedule" value="{{ config.cron_schedule }}">
+                </div>
+                
+                <div class="mt-auto pt-2">
+                    <button type="button" class="btn-apple w-100" onclick="saveConfig()">应用并重载</button>
+                </div>
+            </form>
         </div>
 
-        <div class="col-lg-6 col-xl-5 d-flex">
-            <div class="mac-terminal w-100">
-                <div class="terminal-header">
-                    <div class="mac-dots">
-                        <div class="mac-dot dot-red" onclick="clearLogs()" title="清空历史日志"></div>
-                        <div class="mac-dot dot-yellow"></div>
-                        <div class="mac-dot dot-green"></div>
-                    </div>
-                    <div class="terminal-title">backup-runner — bash</div>
-                    <div class="ios-toggle-label">
-                        <label class="ios-switch" title="实时日志开关">
-                            <input type="checkbox" id="autoRefresh" checked>
-                            <span class="slider"></span>
-                        </label>
-                    </div>
+        <div class="terminal-pane">
+            <div class="terminal-header">
+                <div class="mac-dots">
+                    <div class="mac-dot dot-red" onclick="clearLogs()" style="cursor:pointer;" title="清空终端"></div>
+                    <div class="mac-dot dot-yellow"></div>
+                    <div class="mac-dot dot-green"></div>
                 </div>
-                <textarea id="logOutput" readonly>Loading console...</textarea>
+                <div class="terminal-title">Runner — [ikuai_backup.service] — bash</div>
+                <div style="width:70px"></div>
+                
+                <div class="ios-toggle-label">
+                    <span>实时</span>
+                    <label class="ios-switch">
+                        <input type="checkbox" id="autoRefresh" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
             </div>
+            <textarea id="logOutput" readonly>Loading console...</textarea>
         </div>
     </div>
 </div>
@@ -199,6 +181,8 @@ function getFormData() {
         "cd2_pass": document.getElementById('cd2_pass').value,
         "cd2_path": document.getElementById('cd2_path').value,
         "retain_days": parseInt(document.getElementById('retain_days').value),
+        // 获取本地保留天数
+        "local_retain_days": parseInt(document.getElementById('local_retain_days').value),
         "cron_schedule": document.getElementById('cron_schedule').value
     };
 }
@@ -212,7 +196,7 @@ function saveConfig() {
 }
 
 function triggerBackup() {
-    if(confirm("立即在后台触发完整备份流水线？")) {
+    if(confirm("立即在本机后台触发一次完整备份流程？")) {
         fetch('/api/trigger', { method: 'POST' })
         .then(res => res.json()).then(data => { fetchLogs(); });
     }
@@ -232,7 +216,7 @@ function fetchLogs() {
 }
 
 function clearLogs() {
-    if(confirm("强制清空终端日志？")) {
+    if(confirm("强制清空终端历史日志？")) {
         fetch('/api/clear_logs', {method: 'POST'}).then(() => fetchLogs());
     }
 }
